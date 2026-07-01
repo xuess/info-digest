@@ -37,10 +37,33 @@ def build_feishu_card(
     template_dir: str | Path = "config/templates",
 ) -> dict[str, Any]:
     """Build a Feishu interactive card JSON from scored entries."""
-    env = _get_jinja_env(template_dir)
-    template = env.get_template("feishu_card.j2")
-    rendered = template.render(entries=entries, now=datetime.now(timezone.utc))
-    return json.loads(rendered)
+    elements: list[dict[str, Any]] = []
+    for i, entry in enumerate(entries):
+        summary = entry.summary[:200]
+        if len(entry.summary) > 200:
+            summary += "…"
+        content = (
+            f"**[{entry.title}]({entry.link})**\n"
+            f"{summary}\n"
+            f"🏷 {entry.grade} · ⭐ {round(entry.raw_score, 1)} · InfoDigest"
+        )
+        elements.append({
+            "tag": "div",
+            "text": {"tag": "lark_md", "content": content},
+        })
+        if i < len(entries) - 1:
+            elements.append({"tag": "hr"})
+
+    return {
+        "msg_type": "interactive",
+        "card": {
+            "header": {
+                "title": {"tag": "plain_text", "content": "📰 InfoDigest 每日精选 [info]"},
+                "template": "blue",
+            },
+            "elements": elements,
+        },
+    }
 
 
 def build_dingtalk_md(
@@ -68,16 +91,7 @@ def chunk_entries(
     max_entries: int = 20,
     max_bytes: int = 30000,
 ) -> list[DigestChunk]:
-    """Split entries into chunks respecting count and byte limits.
-
-    Args:
-        entries: Scored entries to chunk.
-        max_entries: Max entries per chunk.
-        max_bytes: Max byte size per chunk (approximate, via JSON encoding).
-
-    Returns:
-        List of DigestChunk objects.
-    """
+    """Split entries into chunks respecting count and byte limits."""
     if not entries:
         return []
 
@@ -86,14 +100,12 @@ def chunk_entries(
     current_bytes = 0
 
     for entry in entries:
-        # Estimate size of this entry
         entry_bytes = len(json.dumps({
             "title": entry.title,
             "summary": entry.summary,
             "link": entry.link,
         }).encode("utf-8"))
 
-        # Check if adding this entry would exceed limits
         if current and (
             len(current) >= max_entries
             or current_bytes + entry_bytes > max_bytes
@@ -101,7 +113,7 @@ def chunk_entries(
             chunks.append(DigestChunk(
                 entries=list(current),
                 index=len(chunks),
-                total_chunks=0,  # Filled below
+                total_chunks=0,
             ))
             current = []
             current_bytes = 0
@@ -109,7 +121,6 @@ def chunk_entries(
         current.append(entry)
         current_bytes += entry_bytes
 
-    # Don't forget the last chunk
     if current:
         chunks.append(DigestChunk(
             entries=list(current),
@@ -117,14 +128,9 @@ def chunk_entries(
             total_chunks=0,
         ))
 
-    # Fill total_chunks
     total = len(chunks)
     chunks = [
-        DigestChunk(
-            entries=ch.entries,
-            index=ch.index,
-            total_chunks=total,
-        )
+        DigestChunk(entries=ch.entries, index=ch.index, total_chunks=total)
         for ch in chunks
     ]
 
