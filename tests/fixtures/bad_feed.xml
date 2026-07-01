@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Deliberately malformed / edge-case feed for error handling tests -->
+<rss version="2.0">
+  <channel>
+    <title>Bad Feed</title>
+    <link>https://bad.example.com</link>
+    <description>A feed with problematic entries</description>
+    <item>
+      <!-- No title, no link — should be skipped -->
+      <description>Orphan entry with no title or link.</description>
+    </item>
+    <item>
+      <title></title>
+      <link>https://bad.example.com/empty-title</link>
+      <description>Entry with empty title.</description>
+    </item>
+    <item>
+      <title>Valid Entry</title>
+      <link>https://bad.example.com/valid</link>
+      <description>This one is fine.</description>
+      <pubDate>Mon, 30 Jun 2026 10:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
