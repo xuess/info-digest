@@ -1,0 +1,22 @@
+# 全局设置
+storage:
+  db_path: data/infodigest.db
+  failed_digests_dir: data/failed_digests
+
+collector:
+  timeout: 15
+  retries: 3
+  user_agent: "InfoDigest/1.0 (+https://github.com/xuess/info-digest)"
+
+delivery:
+  feishu:
+    enabled: true
+    webhook_env: FEISHU_WEBHOOK
+    secret_env: FEISHU_SECRET
+  dingtalk:
+    enabled: false
+    webhook_env: DINGTALK_WEBHOOK
+    secret_env: DINGTALK_SECRET
+
+scheduler:
+  cron: "0 1,9 * * *"   # UTC → 北京时间 9:00/17:00

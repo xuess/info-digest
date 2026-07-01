@@ -1,0 +1,65 @@
+# RSS 源注册表
+sources:
+  - id: hackernews
+    url: https://hnrss.org/frontpage
+    category: tech
+    authority: 0.9
+    lang: en
+    tags: [news, startup, ai]
+    enabled: true
+
+  - id: ruanyifeng
+    url: https://www.ruanyifeng.com/blog/atom.xml
+    category: tech
+    authority: 0.8
+    lang: zh
+    tags: [weekly, web]
+    enabled: true
+
+  - id: cnblogs
+    url: https://feed.cnblogs.com/blog/sitecateogry/108698/rss
+    category: tech
+    authority: 0.7
+    lang: zh
+    tags: [dev, blog]
+    enabled: true
+
+  - id: infoq-cn
+    url: https://www.infoq.cn/feed
+    category: tech
+    authority: 0.75
+    lang: zh
+    tags: [architecture, devops]
+    enabled: true
+
+  - id: mit-tech-review
+    url: https://www.technologyreview.com/feed/
+    category: ai
+    authority: 0.85
+    lang: en
+    tags: [ai, research]
+    enabled: true
+
+  - id: jiqizhixin
+    url: https://www.jiqizhixin.com/rss
+    category: ai
+    authority: 0.8
+    lang: zh
+    tags: [ai, ml, deep-learning]
+    enabled: true
+
+  - id: github-trending
+    url: https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml
+    category: opensource
+    authority: 0.75
+    lang: en
+    tags: [github, trending, oss]
+    enabled: true
+
+  - id: lwn
+    url: https://lwn.net/headlines/rss
+    category: opensource
+    authority: 0.8
+    lang: en
+    tags: [linux, kernel, oss]
+    enabled: true
