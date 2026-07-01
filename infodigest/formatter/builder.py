@@ -12,6 +12,7 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from infodigest.rater.scorer import ScoredEntry
+from infodigest.formatter.translator import translate_entry_summary
 
 
 @dataclass(frozen=True)
@@ -32,11 +33,38 @@ def _get_jinja_env(template_dir: str | Path = "config/templates") -> Environment
     )
 
 
+def _maybe_translate(entries: list[ScoredEntry], enabled: bool) -> list[ScoredEntry]:
+    """Translate English summaries to Chinese if enabled.
+
+    Returns new ScoredEntry list with translated summaries.
+    """
+    if not enabled:
+        return entries
+
+    result: list[ScoredEntry] = []
+    for e in entries:
+        translated_summary = translate_entry_summary(e.summary)
+        result.append(ScoredEntry(
+            uid=e.uid,
+            source_id=e.source_id,
+            title=e.title,
+            summary=translated_summary,
+            link=e.link,
+            published=e.published,
+            raw=e.raw,
+            raw_score=e.raw_score,
+            grade=e.grade,
+        ))
+    return result
+
+
 def build_feishu_card(
     entries: list[ScoredEntry],
     template_dir: str | Path = "config/templates",
+    translate: bool = False,
 ) -> dict[str, Any]:
     """Build a Feishu interactive card JSON from scored entries."""
+    entries = _maybe_translate(entries, translate)
     elements: list[dict[str, Any]] = []
     for i, entry in enumerate(entries):
         summary = entry.summary[:200]
@@ -69,8 +97,10 @@ def build_feishu_card(
 def build_dingtalk_md(
     entries: list[ScoredEntry],
     template_dir: str | Path = "config/templates",
+    translate: bool = False,
 ) -> str:
     """Build a DingTalk markdown message from scored entries."""
+    entries = _maybe_translate(entries, translate)
     env = _get_jinja_env(template_dir)
     template = env.get_template("dingtalk_md.j2")
     return template.render(entries=entries, now=datetime.now(timezone.utc))
@@ -79,8 +109,10 @@ def build_dingtalk_md(
 def build_digest_section(
     entries: list[ScoredEntry],
     template_dir: str | Path = "config/templates",
+    translate: bool = False,
 ) -> str:
     """Build a digest section (reusable block) from scored entries."""
+    entries = _maybe_translate(entries, translate)
     env = _get_jinja_env(template_dir)
     template = env.get_template("digest_section.j2")
     return template.render(entries=entries)

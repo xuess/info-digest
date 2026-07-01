@@ -18,5 +18,9 @@ delivery:
     webhook_env: DINGTALK_WEBHOOK
     secret_env: DINGTALK_SECRET
 
+translate:
+  enabled: true
+  target_lang: zh-CN
+
 scheduler:
   cron: "0 1,9 * * *"   # UTC → 北京时间 9:00/17:00

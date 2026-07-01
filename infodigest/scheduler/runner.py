@@ -204,9 +204,9 @@ def run(config: Config) -> RunReport:
             limiter.acquire()
             try:
                 if channel_name == "feishu":
-                    payload = json.dumps(build_feishu_card(chunk.entries, config_dir / "templates"))
+                    payload = json.dumps(build_feishu_card(chunk.entries, config_dir / "templates", translate=config.translate.enabled))
                 else:
-                    payload = build_dingtalk_md(chunk.entries, config_dir / "templates")
+                    payload = build_dingtalk_md(chunk.entries, config_dir / "templates", translate=config.translate.enabled)
 
                 success = channel.send(payload)
                 if success:

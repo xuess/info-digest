@@ -50,10 +50,17 @@ class SchedulerConfig:
 
 
 @dataclass(frozen=True)
+class TranslateConfig:
+    enabled: bool = False
+    target_lang: str = "zh-CN"
+
+
+@dataclass(frozen=True)
 class Config:
     storage: StorageConfig = field(default_factory=StorageConfig)
     collector: CollectorConfig = field(default_factory=CollectorConfig)
     delivery: DeliveryConfig = field(default_factory=DeliveryConfig)
+    translate: TranslateConfig = field(default_factory=TranslateConfig)
     scheduler: SchedulerConfig = field(default_factory=SchedulerConfig)
     config_dir: Path = field(default_factory=lambda: Path("config"))
 
@@ -86,6 +93,7 @@ def load_config(config_dir: str | Path = "config") -> Config:
     storage_raw = raw.get("storage", {})
     collector_raw = raw.get("collector", {})
     scheduler_raw = raw.get("scheduler", {})
+    translate_raw = raw.get("translate", {})
 
     return Config(
         storage=StorageConfig(
@@ -98,6 +106,10 @@ def load_config(config_dir: str | Path = "config") -> Config:
             user_agent=collector_raw.get("user_agent", "InfoDigest/1.0"),
         ),
         delivery=_build_delivery(raw.get("delivery", {})),
+        translate=TranslateConfig(
+            enabled=translate_raw.get("enabled", False),
+            target_lang=translate_raw.get("target_lang", "zh-CN"),
+        ),
         scheduler=SchedulerConfig(
             cron=scheduler_raw.get("cron", "0 1,9 * * *"),
         ),

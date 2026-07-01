@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from infodigest.config import Config, StorageConfig, CollectorConfig, DeliveryConfig, DeliveryChannelConfig, SchedulerConfig
+from infodigest.config import Config, StorageConfig, CollectorConfig, DeliveryConfig, DeliveryChannelConfig, SchedulerConfig, TranslateConfig
 
 
 @pytest.fixture
@@ -120,6 +120,7 @@ def full_config(tmp_path: Path) -> Config:
             feishu=DeliveryChannelConfig(enabled=False),
             dingtalk=DeliveryChannelConfig(enabled=False),
         ),
+        translate=TranslateConfig(enabled=False),
         scheduler=SchedulerConfig(),
         config_dir=config_dir,
     )
