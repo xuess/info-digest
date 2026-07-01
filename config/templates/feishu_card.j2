@@ -1,0 +1,27 @@
+{
+  "msg_type": "interactive",
+  "card": {
+    "header": {
+      "title": {
+        "tag": "plain_text",
+        "content": "📰 InfoDigest 每日精选"
+      },
+      "template": "blue"
+    },
+    "elements": [
+      {% for entry in entries %}
+      {
+        "tag": "div",
+        "text": {
+          "tag": "lark_md",
+          "content": "**[{{ entry.title }}]({{ entry.link }})**\n{{ entry.summary[:200] }}{% if entry.summary|length > 200 %}…{% endif %}\n🏷 {{ entry.grade }} · ⭐ {{ entry.raw_score | round(1) }}"
+        }
+      }{% if not loop.last %},
+      {
+        "tag": "hr"
+      },
+      {% endif %}
+      {% endfor %}
+    ]
+  }
+}

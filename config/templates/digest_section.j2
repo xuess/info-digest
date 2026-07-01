@@ -1,0 +1,8 @@
+{% for entry in entries %}
+### [{{ entry.title }}]({{ entry.link }})
+{{ entry.summary[:200] }}{% if entry.summary|length > 200 %}…{% endif %}
+
+**{{ entry.grade }}** · {{ entry.raw_score | round(1) }}{% if not loop.last %}
+
+---{% endif %}
+{% endfor %}

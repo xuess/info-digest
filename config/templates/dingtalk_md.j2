@@ -1,0 +1,11 @@
+# 📰 InfoDigest 每日精选
+
+{% for entry in entries %}
+## [{{ entry.title }}]({{ entry.link }})
+{{ entry.summary[:200] }}{% if entry.summary|length > 200 %}…{% endif %}
+
+> 🏷 **{{ entry.grade }}** · ⭐ {{ entry.raw_score | round(1) }}
+
+---
+
+{% endfor %}
