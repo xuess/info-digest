@@ -24,7 +24,7 @@ def _row_to_entry(row: sqlite3.Row) -> Entry:
         summary=row["summary"] or "",
         link=row["link"] or "",
         published=published,
-        raw={},  # raw is not stored in DB
+        raw={},
     )
 
 
@@ -38,14 +38,11 @@ class Repo:
         """Insert or replace entries. Returns count of new inserts."""
         if not entries:
             return 0
-
         new_count = 0
         for e in entries:
-            # Check if exists
             existing = self._conn.execute(
                 "SELECT uid FROM entries WHERE uid = ?", (e.uid,)
             ).fetchone()
-
             pub_str = e.published.isoformat() if e.published else None
             self._conn.execute(
                 """INSERT OR REPLACE INTO entries
@@ -56,7 +53,6 @@ class Repo:
             )
             if existing is None:
                 new_count += 1
-
         self._conn.commit()
         return new_count
 
@@ -67,13 +63,11 @@ class Repo:
         """Insert entries with scores. entries = [(Entry, score, grade), ...]"""
         if not entries:
             return 0
-
         new_count = 0
         for entry, raw_score, grade in entries:
             existing = self._conn.execute(
                 "SELECT uid FROM entries WHERE uid = ?", (entry.uid,)
             ).fetchone()
-
             pub_str = entry.published.isoformat() if entry.published else None
             self._conn.execute(
                 """INSERT OR REPLACE INTO entries
@@ -84,7 +78,6 @@ class Repo:
             )
             if existing is None:
                 new_count += 1
-
         self._conn.commit()
         return new_count
 
@@ -102,12 +95,9 @@ class Repo:
         """Get entries that haven't been included in a digest yet, meeting grade threshold."""
         grade_order = {"A": 1, "B": 2, "C": 3}
         min_order = grade_order.get(grade_min, 2)
-
-        # Build grade filter
         grades = [g for g, o in grade_order.items() if o <= min_order]
         if not grades:
             return []
-
         placeholders = ",".join("?" for _ in grades)
         rows = self._conn.execute(
             f"""SELECT * FROM entries
@@ -116,7 +106,6 @@ class Repo:
                 ORDER BY raw_score DESC""",
             grades,
         ).fetchall()
-
         return [_row_to_entry(row) for row in rows]
 
     def mark_digest(
@@ -229,3 +218,34 @@ class Repo:
             "SELECT grade, COUNT(*) as cnt FROM entries GROUP BY grade"
         ).fetchall()
         return {row["grade"]: row["cnt"] for row in rows if row["grade"]}
+
+    def source_health(self) -> list[dict[str, Any]]:
+        """Get health stats for all sources based on recent entries."""
+        rows = self._conn.execute(
+            """SELECT
+                 s.id, s.url, s.authority, s.enabled,
+                 COUNT(e.uid) as entry_count,
+                 MAX(e.published) as last_entry
+               FROM sources s
+               LEFT JOIN entries e ON s.id = e.source_id
+               GROUP BY s.id
+               ORDER BY entry_count DESC"""
+        ).fetchall()
+        return [
+            {
+                "id": row["id"],
+                "url": row["url"],
+                "authority": row["authority"],
+                "enabled": bool(row["enabled"]),
+                "entry_count": row["entry_count"],
+                "last_entry": row["last_entry"],
+            }
+            for row in rows
+        ]
+
+    def disable_source(self, source_id: str) -> None:
+        """Disable a source (e.g. after repeated failures)."""
+        self._conn.execute(
+            "UPDATE sources SET enabled = 0 WHERE id = ?", (source_id,)
+        )
+        self._conn.commit()

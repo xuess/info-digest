@@ -184,3 +184,34 @@ class TestRepoSource:
         etag, lm = repo.get_source_etag("nonexistent")
         assert etag is None
         assert lm is None
+
+
+class TestSourceHealth:
+    def test_source_health_empty(self, repo: Repo) -> None:
+        health = repo.source_health()
+        assert health == []
+
+    def test_source_health_with_data(self, repo: Repo) -> None:
+        repo.upsert_source("src1", "https://a.com/feed", "tech", 0.8)
+        repo.upsert_source("src2", "https://b.com/feed", "ai", 0.6)
+        entries = [
+            (_make_entry("uid1", source_id="src1"), 80.0, "A"),
+            (_make_entry("uid2", source_id="src1"), 60.0, "B"),
+            (_make_entry("uid3", source_id="src2"), 40.0, "C"),
+        ]
+        repo.upsert_scored_entries(entries)
+        health = repo.source_health()
+        assert len(health) == 2
+        assert health[0]["id"] == "src1"
+        assert health[0]["entry_count"] == 2
+        assert health[1]["id"] == "src2"
+        assert health[1]["entry_count"] == 1
+
+    def test_disable_source(self, repo: Repo) -> None:
+        repo.upsert_source("src1", "https://a.com/feed")
+        repo.disable_source("src1")
+        health = repo.source_health()
+        assert health[0]["enabled"] is False
+
+    def test_disable_nonexistent_source(self, repo: Repo) -> None:
+        repo.disable_source("nonexistent")
