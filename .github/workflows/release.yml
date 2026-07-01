@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: pytest --cov=infodigest --cov-fail-under=60
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog from conventional commits since last tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            COMMITS=$(git log --oneline --no-decorate)
+          else
+            COMMITS=$(git log --oneline --no-decorate ${PREV_TAG}..HEAD)
+          fi
+          
+          echo "## Changes" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          
+          echo "$COMMITS" | grep -E "^[a-f0-9]+ feat:" | sed 's/^[a-f0-9]*/-/' >> CHANGELOG.md || true
+          echo "$COMMITS" | grep -E "^[a-f0-9]+ fix:" | sed 's/^[a-f0-9]*/-/' >> CHANGELOG.md || true
+          echo "$COMMITS" | grep -E "^[a-f0-9]+ refactor:" | sed 's/^[a-f0-9]*/-/' >> CHANGELOG.md || true
+          
+          if [ ! -s CHANGELOG.md ] || [ $(wc -l < CHANGELOG.md) -le 2 ]; then
+            echo "- Maintenance release" >> CHANGELOG.md
+          fi
+          
+          cat CHANGELOG.md
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: CHANGELOG.md
+          generate_release_notes: true
